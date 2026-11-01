@@ -2,6 +2,20 @@ import { ai, db } from "hatchable";
 export const access = "public";
 export const methods = ["POST"];
 
+function stripCodeFence(value) {
+  let text = String(value || "").trim();
+  if (text.startsWith("```")) {
+    const newline = text.indexOf("\n");
+    if (newline >= 0) {
+      const label = text.slice(0, newline).trim().toLowerCase();
+      if (label === "```" || label === "```json") text = text.slice(newline + 1);
+    }
+  }
+  text = text.trim();
+  if (text.endsWith("```")) text = text.slice(0, -3).trimEnd();
+  return text;
+}
+
 function validEventDate(value) {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const [year, month, day] = value.split("-").map(Number);
@@ -109,7 +123,7 @@ export default async function (req, res) {
       }
       if (!raw) throw new Error("All managed Gemini model aliases failed: " + failures.join(" | "));
     }
-    const jsonText = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+    const jsonText = stripCodeFence(raw);
     const start = jsonText.indexOf("{"); const end = jsonText.lastIndexOf("}");
     if (start < 0 || end <= start) throw new Error("AI response was not valid JSON");
     const plan = JSON.parse(jsonText.slice(start, end + 1));

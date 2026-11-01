@@ -68,9 +68,23 @@ function cleanList(value, count, max) {
 }
 
 /** Turns the model text into a safe answer object, or null if it does not have the expected shape. */
+function stripCodeFence(value) {
+  let text = String(value || "").trim();
+  if (text.startsWith("```")) {
+    const newline = text.indexOf("\n");
+    if (newline >= 0) {
+      const label = text.slice(0, newline).trim().toLowerCase();
+      if (label === "```" || label === "```json") text = text.slice(newline + 1);
+    }
+  }
+  text = text.trim();
+  if (text.endsWith("```")) text = text.slice(0, -3).trimEnd();
+  return text;
+}
+
 function parseAssist(text) {
   if (typeof text !== 'string') return null;
-  const stripped = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+  const stripped = stripCodeFence(text);
   let data;
   try {
     data = JSON.parse(stripped);

@@ -58,8 +58,22 @@ function fallback({ event, lang, date, guests, budget, notes }) {
   return { source: "fallback", reason: "ai_unavailable", focus, ideas, savingTips, messageDraft };
 }
 
+function stripCodeFence(value) {
+  let text = String(value || "").trim();
+  if (text.startsWith("```")) {
+    const newline = text.indexOf("\n");
+    if (newline >= 0) {
+      const label = text.slice(0, newline).trim().toLowerCase();
+      if (label === "```" || label === "```json") text = text.slice(newline + 1);
+    }
+  }
+  text = text.trim();
+  if (text.endsWith("```")) text = text.slice(0, -3).trimEnd();
+  return text;
+}
+
 function parseObject(raw) {
-  const text = String(raw || "").replace(/^\u0060\u0060\u0060(?:json)?\s*/i, "").replace(/\s*\u0060\u0060\u0060$/, "").trim();
+  const text = stripCodeFence(raw);
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
   if (start < 0 || end <= start) throw new Error("invalid_ai_json");
