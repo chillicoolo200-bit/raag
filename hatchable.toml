@@ -1,0 +1,4 @@
+name = "celebrai-ai-event"
+
+[ai]
+required = true
